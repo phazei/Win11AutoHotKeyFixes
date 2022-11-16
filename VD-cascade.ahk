@@ -30,7 +30,7 @@ CASCADE      := 2                    ; for WinArrange Param 1
 VERTICAL     := 0                    ; for WinArrange Param 3
 HORIZONTAL   := 1                    ; for WinArrange Param 3
 ZORDER       := 4                    ; for WinArrange Param 3
-CLIENTAREA   := "200|25|1000|700"    ; for WinArrange Param 4
+CLIENTAREA   := "50|50|1200|1000"    ; for WinArrange Param 4
 
 return
 
@@ -111,7 +111,7 @@ GetCurrentDesktopWindows(byProcess) {
 
 GetClientArea() {
 	SysGet, CA, MonitorWorkArea, 1
-	sArea := CALeft + 50 "|" CATop + 50 "|" CARight - 50 "|" CABottom - 30
+	sArea := CALeft + 30 "|" CATop + 30 "|" CARight - 30 "|" CABottom - 15
 
 	return sArea
 }
