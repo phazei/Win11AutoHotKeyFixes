@@ -16,7 +16,7 @@ SetWinDelay -1
 SetControlDelay -1
 
 ;include the library
-#Include ./VD.ahk/VD.ahk
+#Include ../VD.ahk/VD.ahk
 ; VD.init() ;COMMENT OUT `static dummyStatic1 := VD.init()` if you don't want to init at start of script
 
 ;you should WinHide invisible programs that have a window.
@@ -33,7 +33,9 @@ return
         Return
 
     n -= 1
-    VD.MoveWindowToDesktopNum("A",n), VD.goToDesktopNum(n)
+    active := "ahk_id" WinExist("A")
+    VD.MoveWindowToDesktopNum(active,n), VD.goToDesktopNum(n)
+    WinActivate active ;once in a while it's not active
 Return
 
 ^#+Right::
@@ -42,5 +44,7 @@ Return
         Return
 
     n += 1
-    VD.MoveWindowToDesktopNum("A",n), VD.goToDesktopNum(n)
+    active := "ahk_id" WinExist("A")
+    VD.MoveWindowToDesktopNum(active,n), VD.goToDesktopNum(n)
+    WinActivate active
 Return

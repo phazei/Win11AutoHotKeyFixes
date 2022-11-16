@@ -14,7 +14,7 @@ SetWinDelay -1
 SetControlDelay -1
 
 ;include the library
-#Include ./VD.ahk/VD.ahk
+#Include ../VD.ahk/VD.ahk
 ; VD.init() ;COMMENT OUT `static dummyStatic1 := VD.init()` if you don't want to init at start of script
 #Include ./_WinArrange.ahk
 
@@ -68,7 +68,7 @@ WinArrangeDesktop(arrangeType, arrangeOption, byProcess := "") {
 	windows := GetCurrentDesktopWindows(byProcess)
 	clientArea := GetClientArea()
 
-	if !windows
+	if !windows ;if no windows exist it would default to every window on every desktop = bad
 		return
 
 	WinArrange( arrangeType, windows, arrangeOption, GetClientArea() )
