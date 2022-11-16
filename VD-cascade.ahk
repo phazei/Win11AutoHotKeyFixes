@@ -72,8 +72,21 @@ WinArrangeDesktop(arrangeType, arrangeOption, byProcess := "") {
 		return
 
 	WinArrange( arrangeType, windows, arrangeOption, GetClientArea() )
+
+	if (byProcess)
+		BringWindowsToFront(windows)
 }
 
+BringWindowsToFront(windows) {
+	Loop, Parse, windows, |
+		reverse=%A_LoopField%|%reverse% ; must be reversed or they will all switch order after activating
+
+	Loop, Parse, reverse, |
+		WinActivate, ahk_id %A_LoopField%
+
+}
+
+; this seems to also return minimized windows, for fortunately the Dll call ignores minimized windows
 GetCurrentDesktopWindows(byProcess) {
 	bak_DetectHiddenWindows := A_DetectHiddenWindows
 	DetectHiddenWindows, off
@@ -89,16 +102,22 @@ GetCurrentDesktopWindows(byProcess) {
 	Loop %windows%
 	{
 		hwnd := windows%A_Index%
-		desktopNum_ := VD.getDesktopNumOfWindow("ahk_id" hwnd)
-		If (desktopNum_ = VD.getCurrentDesktopNum())
-		{
-			WinGet, windowProcess, ProcessName, % "ahk_id" hwnd
-			if (byProcess AND windowProcess != activeProcess)
-				continue
 
-			desktopWindows.Push({id:hwnd})
-			stringWindows := stringWindows "|" hwnd
-		}
+		WinGet, windowProcess, ProcessName, % "ahk_id" hwnd
+		if (byProcess AND windowProcess != activeProcess) ; if it's not the same process, ditch it
+			continue
+
+		; WinGetTitle, OutputTitle, % "ahk_id" hwnd ; just for testing
+		desktopNum_ := VD.getDesktopNumOfWindow("ahk_id" hwnd)
+		if (desktopNum_ != VD.getCurrentDesktopNum())
+			continue ; must be on same desktop
+
+		WinGet, minimized, MinMax, % "ahk_id" hwnd
+		if (minimized < 0)
+			continue
+
+		desktopWindows.Push({id:hwnd, title:OutputTitle})
+		stringWindows := stringWindows "|" hwnd
 	}
 
 	stringWindows := Trim(stringWindows, "|")
@@ -120,17 +139,20 @@ GetClientArea() {
 /*
 ;In the future do something with all selected windows
 ;Todo: add/remove windows from a group and only cascade or tile them.
+*/
 
-^#NumpadADD::
-Loop, Parse, ARRAY, |
-  WinActivate, ahk_id %A_LoopField%
++!#NumpadADD:: ; bring window of specific process to front
+	windows := GetCurrentDesktopWindows(true)
+	BringWindowsToFront(windows)
 Return
 
-^#NumpadSub::
-Loop, Parse, ARRAY, |
-  WinMinimize, ahk_id %A_LoopField%
++!#NumpadSub:: ; move all windows of specific process to back
+	windows := GetCurrentDesktopWindows(true)
+	Loop, Parse, windows, |
+		WinSet Bottom, , ahk_id %A_LoopField%
 Return
 
+/*
 ExitRoutine:
 Loop, Parse, ARRAY, |
   WinClose, ahk_id %A_LoopField%
