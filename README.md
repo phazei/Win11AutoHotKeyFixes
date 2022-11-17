@@ -1,3 +1,4 @@
+
 # Win11AutoHotKeyFixes
 This is to resolve deficiencies of Win11 window management, specifically moving active window to next desktop and cascading/tiling windows
 
@@ -24,6 +25,8 @@ For this repo, the VD.ahk directory needs to be a sibling of the files you check
 After I did this, making a CascadeWindows or TileWindows script seemed like it might not be too hard after [finding this ancient post](https://www.autohotkey.com/board/topic/80580-how-to-programmatically-tile-cascade-windows/).
 It needed lots of tweaking to get it working, but it works well with multiple desktops without messing up the windows on other desktops.
 
+While looking to see if there was anything else useful to implement, I came across a poorly implemented application switcher with no reverse.  I really missed this functionality from MacOS, Command+`, so I implemented it as best I could without events to know if the focus order had changed.
+
 ## Usage
 
  - ### Cascading windows
@@ -34,6 +37,9 @@ It needed lots of tweaking to get it working, but it works well with multiple de
  - ### Moving windows
  - Win + Ctrl + Shift + Left:  Move active window to the left desktop and follow it
  - Win + Ctrl + Shift + Right: Move active window to the right and follow it
+ - ### App Specific Switcher (Command+`)
+ - Alt+`:  Switch to most recent non-focused window of same app
+ - Alt+Shift+`:  Switch to oldest non-focused windows of same app
 
 ## Other
 If someone has a better suggestion for the cascading windows shortcuts, feel free to suggest it and any other ideas you might have.
