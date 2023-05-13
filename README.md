@@ -1,6 +1,9 @@
 
 # Win11AutoHotKeyFixes
-This is to resolve deficiencies of Win11 window management, specifically moving active window to next desktop and cascading/tiling windows
+This is to resolve deficiencies of Win11 window management, specifically moving active window to next desktop and cascading/tiling windows.
+
+The App Specific Switcher came about because I wanted to duplicate the MacOS functionality of Using command-backtick (⌘-\`) to toggle between windows.  That comes as close as I could get it, which works pretty well I think.
+
 
 ## Process
 I started with wanting to move the active window to the next desktop.  This [stackoverflow had a few really good answers](https://superuser.com/questions/1685845/moving-current-window-to-another-desktop-in-windows-11-using-shortcut-keys) that built on each other.  Last user was nice enough to give a AHK how-to:
