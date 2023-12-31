@@ -34,7 +34,8 @@ return
 
     n -= 1
     active := "ahk_id" WinExist("A")
-    VD.MoveWindowToDesktopNum(active,n), VD.goToDesktopNum(n)
+    VD.MoveWindowToDesktopNum(active,n)
+    VD.goToDesktopNum(n)
     WinActivate active ;once in a while it's not active
 Return
 
@@ -45,6 +46,7 @@ Return
 
     n += 1
     active := "ahk_id" WinExist("A")
-    VD.MoveWindowToDesktopNum(active,n), VD.goToDesktopNum(n)
+    VD.MoveWindowToDesktopNum(active,n)
+    VD.goToDesktopNum(n)
     WinActivate active
 Return

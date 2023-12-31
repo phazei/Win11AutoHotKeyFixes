@@ -1,4 +1,9 @@
 ;#SETUP START
+; ^ = control
+; # = win
+; ! = alt
+; + = shift
+
 #NoEnv ; Recommended for performance and compatibility with future AutoHotkey releases.
 #SingleInstance force
 ListLines Off
@@ -34,6 +39,12 @@ CLIENTAREA   := "50|50|1200|1000"    ; for WinArrange Param 4
 
 return
 
+
+; ^ = control
+; # = win
+; ! = alt
+; + = shift
+
 ;DO IT FOR ALL WINDOWS ON CURRENT DESKTOP
 
 !#V:: ;TileWindowsVertically
@@ -48,6 +59,9 @@ return
 	WinArrangeDesktop( CASCADE, ZORDER )
 return
 
+;!#T:: ;CascadeWindows testing EVERYTHING
+;	DllCall( "CascadeWindows", uInt,0, Int,4, Int,0, Int,0, Int,0 )
+;return
 
 ;ONLY DO IT FOR SAME PROCESSES
 
@@ -62,6 +76,7 @@ return
 +!#C:: ;CascadeWindows
 	WinArrangeDesktop( CASCADE, ZORDER, true )
 return
+
 
 
 WinArrangeDesktop(arrangeType, arrangeOption, byProcess := "") {
@@ -107,7 +122,7 @@ GetCurrentDesktopWindows(byProcess) {
 		if (byProcess AND windowProcess != activeProcess) ; if it's not the same process, ditch it
 			continue
 
-		; WinGetTitle, OutputTitle, % "ahk_id" hwnd ; just for testing
+		WinGetTitle, OutputTitle, % "ahk_id" hwnd ; just for testing
 		desktopNum_ := VD.getDesktopNumOfWindow("ahk_id" hwnd)
 		if (desktopNum_ != VD.getCurrentDesktopNum())
 			continue ; must be on same desktop
@@ -116,13 +131,13 @@ GetCurrentDesktopWindows(byProcess) {
 		if (minimized < 0)
 			continue
 
-		desktopWindows.Push({id:hwnd, title:OutputTitle})
+		desktopWindows.Push({id:hwnd, title:OutputTitle, processName:windowProcess})
 		stringWindows := stringWindows "|" hwnd
 	}
 
 	stringWindows := Trim(stringWindows, "|")
 
-	DetectHiddenWindows % bak_DetectHiddenWindows
+	DetectHiddenWindows % bak_DetectHiddenWindows ; reset to original value
 
 	return stringWindows
 
