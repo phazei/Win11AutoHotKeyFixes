@@ -5,53 +5,32 @@
 ;         It might be because window id's in the array are 0x123abc vs the 0-1920 for the screen rectangle.
 ;         But I have no idea what that "fill" line is for other than being some bitwise thing
 
+WinArrange(tileOrCascade := 1, windowHandles := [], arrangeType := 0x1, clientArea := [], mainWindow := 0x0) {
+    ; Prepare the client area if provided
+    areaPointer := clientArea ? BufferFromArray(clientArea, "Int") : 0
 
+    ; Prepare the window handles
+    windowsPointer := windowHandles ? BufferFromArray(windowHandles, "Ptr") : 0
 
-WinArrange( TC=1, aStr="", VH=0x1, Rect="", hWnd=0x0 )  {
-    CreateArray( aRect, Rect, 4 )                  ; Create a RECT structure. Note: size must be 4, 8 breaks it
-    If !Rect
-        lpRect := 0                                ; determining whether lpRect is NULL
-    Else
-        lpRect := % &aRect                         ; or a pointer to the RECT Structure.
-
-    cKids := CreateArray( aKids, aStr, 8 )         ; Create an Array of window handles. Note: size must be 8, 4 makes every other window work.
-    If !aStr
-        lpKids := 0                                ; determining whether lpKids is NULL
-    Else
-        lpKids := % &aKids                         ; or a pointer to the array of handles.
-
-    If ( TC = 1 )                                  ; then the windows have to be Tiled
-        Return DllCall("TileWindows",Int,hWnd,UInt,VH,UInt,lpRect,Int,cKids,Int,lpKids)
-    Else {                                         ; the windows have to be Cascaded
-        If VH != 4                                 ; If VH is 4, windows will be cascaded in ZORDER
-            VH := 0
-        Return DllCall("CascadeWindows",Int,hWnd,UInt,VH,UInt,lpRect,Int,cKids,Int,lpKids)
+    ; Call the respective DLL function based on tileOrCascade
+    if (tileOrCascade = 1) {  ; Tile windows
+        return DllCall("TileWindows", "Int", mainWindow, "UInt", arrangeType, "Ptr", areaPointer, "Int", windowHandles.Length, "Ptr", windowsPointer)
+    } else {  ; Cascade windows
+        if arrangeType != 4  ; If arrangeType is 4, windows will be cascaded in ZORDER
+            arrangeType := 0
+        return DllCall("CascadeWindows", "Int", mainWindow, "UInt", arrangeType, "Ptr", areaPointer, "Int", windowHandles.Length, "Ptr", windowsPointer)
     }
 }
 
-CreateArray( ByRef Arr, aStr="", Size=4 ) {        ; complicated variant of InsertInteger()
-    If !aStr                                       ; aStr will be a pipe delimited string of integer values.
-		Return 0
+BufferFromArray(arr, type) {
+    elemSize := type = "Int" ? 4 : A_PtrSize
+    totalSize := arr.Length * elemSize
+    buf := Buffer(totalSize)
 
-    aStr := StrReplace(aStr, "|", "|", aFields, -1)   ; Count the no. of pipes
-    aFields := aFields + 1                            ; no. of pipes, +1 results in no of fields.
-
-    VarSetCapacity( Arr, ( aFields*Size ), 0 ) ; Initialise var length and zero fill it.
-
-    Loop, Parse, aStr, |
-    {
-        Loop %Size% {
-            ; Thanks to Laszlo
-            test := (0 pOffset)
-            testArr := &Arr
-            destination := &Arr+(0 pOffset)+A_Index-1
-            fill := A_LoopField >> 8*(A_Index-1) & 0xFF ;no idea why, if someone can explain, that'd be cool
-            DllCall( "RtlFillMemory", UInt, destination, UInt,1, UChar, fill )
-        }
-        pOffset += %Size%
+    for i, val in arr {
+        offset := (i - 1) * elemSize
+        NumPut(type, val, buf, offset)
     }
 
-    VarSetCapacity( Arr, -1 ) ; make sure it's not too big
-
-    Return aFields
+    return buf
 }

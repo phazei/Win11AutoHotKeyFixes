@@ -5,208 +5,168 @@
 
 
 ;#SETUP START
-#NoEnv ; Recommended for performance and compatibility with future AutoHotkey releases.
 #SingleInstance force
-ListLines Off
-SetBatchLines -1
-SendMode Input ; Recommended for new scripts due to its superior speed and reliability.
-SetWorkingDir %A_ScriptDir% ; Ensures a consistent starting directory.
-#KeyHistory 0
+ListLines 0
+SendMode "Input" ; Recommended for new scripts due to its superior speed and reliability.
+SetWorkingDir A_ScriptDir ; Ensures a consistent starting directory.
 #WinActivateForce
 
-Process, Priority,, H
+ProcessSetPriority "H"
 
 SetWinDelay -1
 SetControlDelay -1
 
-;#Include ../VD.ahk/VD.ahk
+CoordMode "ToolTip", "Screen"
 
-CoordMode, ToolTip, Screen
-
-DetectHiddenWindows, off ; if this is on it will show hidden windows from other desktops
+DetectHiddenWindows False ; Prevents showing hidden windows from other desktops
 
 return
 ; **** END INIT ****
 
+; Alt + ` - Activate NEXT Window of the same App
 
+!`:: {  ; forward
+		SwitchToSameProcess()
+	}
 
-; Alt + ` -  Activate NEXT Window of same type (title checking) of the current APP
-!`::
-	switchToSameProcess()
-return
-
-+!`::
-	switchToSameProcess(true)
-return
-
-
-
-SwitchToSameProcess(reverse := "") {
-	global prevArray
-	global lastIndex
-
-	activeId := WinExist("A")
-	ahk_idId := "ahk_id " activeID
-	WinGet, ActiveProcess, ProcessName, %ahk_idId%
-	ahk_exeProcess := "ahk_exe" ActiveProcess
-	activeArray := GetProcessWindowsArray(ahk_exeProcess)
-
-	;ToolTip % MakeListString(activeArray), 100, 250, 3
-	;ToolTip % MakeListString(prevArray), 100, 375, 4
-
-	if (activeArray.Length() = 1) {
-		; nothing to switch to
-		prevArray := "" ; clear arrays working with
-		return
++!`:: {  ; reverse
+		SwitchToSameProcess(true)
 	}
 
 
-	; so this mostly works to enable consistent forward and backward movment in a list.
+
+SwitchToSameProcess(reverse := false) {
+    global prevArray, lastIndex
+
+	if !IsSet(prevArray)
+        prevArray := []
+
+    activeID := WinExist("A")
+    activeProcess := WinGetProcessName("ahk_id" activeID)
+    activeArray := GetProcessWindowsArray("ahk_exe" activeProcess)
+
+    if activeArray.Length = 1 {
+        ; Only one window, nothing to switch to
+        prevArray := []
+        return
+    }
+
+    OutputDebug(ArrayToSortedString(activeArray) "`n")
+
+
+    ; Maintain consistent forward and backward movement in the window list
+	; Notes:
 	; if you click a different window out of order, it will update the stack order to be new;
 	; if you click around, but go back the the same window you started on, it doesn't know the
     ; order changed so it'll go with the previous order.  Can't just pick a new stack order with
     ; each tap of the tick because it won't keep consisten forward and backwards movement that way
-	currentIndex := GetArrayIndex(prevArray, activeId) ; get index of selected window
-	if (ArrayMatch(prevArray, activeArray)) { ; another window was clicked so order could have changed
-		if (lastIndex AND currentIndex != lastIndex) {
-			; this is how we can tell the stack order changed because different window was focused than
-            ; where this left off. no perfect way to do this without implementing window focus events.
-			prevArray := activeArray ; new array so set prev to match it
-		}
-	} else {
-	    ; different windows involved, must have changed
-		prevArray := activeArray ; new array so set prev to match it
-	}
-	currentIndex := GetArrayIndex(prevArray, activeId)
+    currentIndex := GetArrayIndex(prevArray, activeID)
+    if ArrayMatch(prevArray, activeArray) {
+        ; Update the array if the focused window has changed
+		; Note: best way to detect change without implementing window focus events
+        if !IsSet(lastIndex) && currentIndex != lastIndex {
+            prevArray := activeArray
+        }
+    } else {
+        ; Different windows involved, update the array
+        prevArray := activeArray
+    }
+    currentIndex := GetArrayIndex(prevArray, activeID)
 
-	if (!lastIndex)
-		lastIndex = currentIndex
+    if !IsSet(lastIndex)
+        lastIndex := currentIndex
 
-	activeArray := prevArray ; they match, so keep order of original while cycling forward and back in it
+    activeArray := prevArray ; since they match keep original cycling order
 
-	currentIndex := GetArrayIndex(activeArray, activeId) ; get index of selected window
+    currentIndex := GetArrayIndex(activeArray, activeID)
 
 
-	if (!reverse) { ; forward goes to most recent window
+    if (!reverse) { ; forward goes to most recent window
 		nextIndex := currentIndex + 1
-		if (nextIndex > activeArray.Length()) {
-			nextIndex = 1
+		if (nextIndex > activeArray.Length) {
+			nextIndex := 1
 		}
 	} else { ; backwards goes to oldest window
 		nextIndex := currentIndex - 1
 		if (nextIndex < 1) {
-			nextIndex := activeArray.Length()
+			nextIndex := activeArray.Length
 		}
 	}
 
-	; debugging
-	;ToolTip % "nextIndex:" nextIndex , 100, 100, 1
-	;ToolTip % MakeListString(activeArray), 100, 120, 2
 
-	lastIndex := nextIndex
-	WinActivate, % "ahk_id " activeArray[nextIndex]	; Activate next Window
-
-
+    lastIndex := nextIndex
+    WinActivate("ahk_id " activeArray[nextIndex]) ; Activate next Window
 }
 
+GetProcessWindowsArray(search) { ; Return the list of windows as an array object easier to pass around
+    windowArray := []
+    for hwnd in WinGetList(search, , , "PopupHost") {
+        if WinGetMinMax(hwnd) < 0
+            continue
 
-GetProcessWindowsArray(search) { ; return the list of windows as an array object easier to pass around
-	windowArray := []
-
-	WinGet, listOfWindows, List, %search%, , , "PopupHost"
-	Loop %listOfWindows% {
-		hwnd := listOfWindows%A_Index%
-
-		WinGet, minimized, MinMax, % "ahk_id" hwnd
-		if (minimized < 0)
-			continue
-
-		windowArray.Push(hwnd)
-	}
-
-	return windowArray
+        windowArray.Push(hwnd)
+    }
+    return windowArray
 }
 
-; array utilities build for this
-
-; Items need to be in same order, but can be shifted.
-; eg)  [1,2,3,4] == [3,4,1,2]  &&  [1,2,3,4] != [2,1,3,4]  &&  [1,2,3,4] != [4,3,2,1]
-; uhg, turns out the stack changes too much so this way won't work
+; Array utilities for this script
 ArrayMatchSequence(arr1, arr2) {
-	; first make sure the array elements match
-	if (!ArrayMatch(arr1, arr2))
-		return false
+    if !ArrayMatch(arr1, arr2)
+        return false
 
-	shiftedIndex := GetArrayIndex(arr2, arr1[1]) ; find out where the first item in arr1 is in arr2
-	shiftedIndex := shiftedIndex - 1
+    shiftedIndex := GetArrayIndex(arr2, arr1[1]) - 1
 
-	Loop % arr1.Length() {
-		index2 := A_Index + shiftedIndex
-		if (index2 > arr1.Length())
-			index2 := index2 - arr1.Length()
+    for i, _ in arr1 {
+        index2 := i + shiftedIndex
+        if index2 > arr1.Length
+            index2 -= arr1.Length
 
-		if (arr1[A_Index] != arr2[index2])
-			return false
-	}
-	return true
+        if arr1[i] != arr2[index2]
+            return false
+    }
+    return true
 }
 
-ArrayMatch(arr1, arr2) { ; true if they have same elements
-	arr1String := ArrayToSortedString(arr1)
-	arr2String := ArrayToSortedString(arr2)
-	return arr1String = arr2String
+ArrayMatch(arr1, arr2) {
+    return ArrayToSortedString(arr1) = ArrayToSortedString(arr2)
 }
+
 ArrayToSortedString(arr) {
-	arrString := ""
-	Loop % arr.Length() {
-		arrString := arrString "," arr[A_Index]
-	}
-	Trim(arrString, ",")
-	Sort arrString, D,
-	return arrString
+    return Sort(ArrayToString(arr), "D,")
 }
+ArrayToString(arr) {
+    arrString := ""
+    for i,_ in arr
+        arrString .= "," arr[i]
+    arrString := Trim(arrString, ",")
+    return arrString
+}
+
 GetArrayIndex(arr, item) {
-	index := ""
-	Loop % arr.Length() {
-		if (arr[A_Index] = item) {
-			index := A_Index
-			break
-		}
-	}
-	return index
+    for i, v in arr {
+        if v = item
+            return i
+    }
+    return ""
 }
 
-
-; for debugging
-
+; For debugging
 MakeListString(winArray) {
+    foundProcessesArr := []
+    for i, hwnd in winArray {
+        processName := WinGetProcessName(hwnd)
+        windowTitle := WinGetTitle(hwnd)
+        windowClass := WinGetClass(hwnd)
 
-	foundProcessesArr := []
+        ; Example without the desktop number
+        foundProcessesArr.Push({num: i, id: hwnd, exe: processName, wClass: windowClass, wTitle: windowTitle})
+    }
 
-	Loop % winArray.Length() {
-		hwnd := winArray[A_Index]
-		ahk_idId := "ahk_id " hwnd
-		;VD.getDesktopNumOfWindow will filter out invalid windows
-		; desktopNum_ := VD.getDesktopNumOfWindow("ahk_id" hwnd)
-		;If (desktopNum_ > -1) ;-1 for invalid window, 0 for "Show on all desktops", 1 for Desktop 1
-		;{
-			WinGet, exe, ProcessName, %ahk_idId%
-			WinGetTitle, wTitle, %ahk_idId%
-			WinGetClass, wClass, %ahk_idId%
+    finalStr := "('0' for `"Show on all desktops`", '1' for Desktop 1)`n`n"
 
-			foundProcessesArr.Push({num:A_Index, id:hwnd, exe:exe, wClass:wClass, wTitle:wTitle, desktopNum_:desktopNum_})
-		;}
-	}
+    for _, v in foundProcessesArr {
+        finalStr .= v.desktopNum_ " | #:" v.num " | id:" v.id " | e:" v.exe " | c:" v.wClass " | t:" v.wTitle "`n"
+    }
 
-
-	finalStr := "('0' for ""Show on all desktops"", '1' for Desktop 1)`n`n"
-
-	for unused, v_ in foundProcessesArr {
-		finalStr .= v_.desktopNum_ " | #:" v_.num " | id:" v_.id " | e:" v_.exe " | c:" v_.wClass " | t:" v_.wTitle "`n"
-	}
-
-	;MsgBox % finalStr
-	;ToolTip % finalStr, 100, 120, 2
-	return finalStr
-
+    return finalStr
 }

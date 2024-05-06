@@ -1,3 +1,4 @@
+# Library all updated to AHK 2.0
 
 # Win11AutoHotKeyFixes
 This is to resolve deficiencies of Win11 window management, specifically moving active window to next desktop and cascading/tiling windows.
@@ -22,7 +23,7 @@ I started with wanting to move the active window to the next desktop.  This [sta
 > Open that folder by typing  `shell:startup`  in the window that pops
 > up after you hit  Win  +  R.
 
-For this repo, the VD.ahk directory needs to be a sibling of the files you check out here.
+For this repo, the VD.ah2 directory needs to be a sibling of the files you check out here.
 
 
 After I did this, making a CascadeWindows or TileWindows script seemed like it might not be too hard after [finding this ancient post](https://www.autohotkey.com/board/topic/80580-how-to-programmatically-tile-cascade-windows/).
