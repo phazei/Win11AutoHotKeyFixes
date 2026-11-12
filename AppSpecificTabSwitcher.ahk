@@ -42,8 +42,10 @@ SwitchToSameProcess(reverse := false) {
         prevArray := []
 
     activeID := WinExist("A")
-    activeProcess := WinGetProcessName("ahk_id" activeID)
-    activeArray := GetProcessWindowsArray("ahk_exe" activeProcess)
+    if !activeID
+        return
+    activeProcess := WinGetProcessName("ahk_id " activeID)
+    activeArray := GetProcessWindowsArray("ahk_exe " activeProcess)
 
     if activeArray.Length = 1 {
         ; Only one window, nothing to switch to
@@ -64,7 +66,7 @@ SwitchToSameProcess(reverse := false) {
     if ArrayMatch(prevArray, activeArray) {
         ; Update the array if the focused window has changed
 		; Note: best way to detect change without implementing window focus events
-        if !IsSet(lastIndex) && currentIndex != lastIndex {
+        if IsSet(lastIndex) && currentIndex != lastIndex {
             prevArray := activeArray
         }
     } else {

@@ -76,7 +76,7 @@ return
 WinArrangeDesktop(arrangeType, arrangeOption, byProcess := false) {
 	windows := GetCurrentDesktopWindows(byProcess)
 
-	if !windows ; If no windows exist, it would default to every window on every desktop = bad
+	if !windows.Length ; If no windows exist, it would default to every window on every desktop = bad
 		return
 
 	WinArrange(arrangeType, windows, arrangeOption, GetClientArea())
@@ -102,7 +102,12 @@ GetCurrentDesktopWindows(byProcess := false) {
     windows := []
     stringWindows := ""
 
-    activeProcess := WinGetProcessName("A")
+    try {
+        activeProcess := WinGetProcessName("A")
+    } catch {
+        activeProcess := ""
+    }
+    currentDeskNum := VD.getCurrentDesktopNum()
 
     ; Make sure to get all windows from all virtual desktops
     DetectHiddenWindows true
@@ -116,9 +121,7 @@ GetCurrentDesktopWindows(byProcess := false) {
         if byProcess && windowProcess != activeProcess
             continue
 
-        windowTitle := WinGetTitle(hwnd)
         desktopNum := VD.getDesktopNumOfWindow(hwnd)
-		currentDeskNum := VD.getCurrentDesktopNum()
         if desktopNum != currentDeskNum
             continue  ; must be on same desktop
 
@@ -136,7 +139,7 @@ GetCurrentDesktopWindows(byProcess := false) {
 }
 
 GetClientArea() {
-    MonitorGetWorkArea(1, &left, &top, &right, &bottom)
+    MonitorGetWorkArea(MonitorGetPrimary(), &left, &top, &right, &bottom)
     return [(left + CA_MARGIN), (top + CA_MARGIN), (right - CA_MARGIN), (bottom - CA_MARGIN)]
 }
 

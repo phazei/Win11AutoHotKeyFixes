@@ -1,139 +1,120 @@
-**Library & Setup Instructions all updated to AHK 2.0** 
+**Library & Setup Instructions all updated to AHK 2.0**
 
 # Win11AutoHotKeyFixes
-This is to resolve deficiencies of Win11 window management, specifically moving active window to next desktop and cascading/tiling windows.
 
-The App Specific Switcher came about because I wanted to duplicate the MacOS functionality of Using command-backtick (⌘-\`) to toggle between windows.  That comes as close as I could get it, which works pretty well I think.
+Windows 11 window management is missing some pretty basic stuff, so these scripts fill in the gaps:
 
-I started with wanting to move the active window to the next desktop.  This [stackoverflow had a few really good answers](https://superuser.com/questions/1685845/moving-current-window-to-another-desktop-in-windows-11-using-shortcut-keys) that built on each other.  Last user was nice enough to give [an AHK how-to](https://superuser.com/a/1728476):
+- **Move the active window to the next/previous desktop** (and follow it there)
+- **Switch desktops instantly**, without the slow slide animation, and wrap around at the ends
+- **Cascade or tile windows**, only on the current desktop, without messing up windows on your other desktops
+- **Switch between windows of the same app**, like MacOS Command+\` (⌘-\`)
 
-After I did this, making a CascadeWindows or TileWindows script seemed like it might not be too hard after [finding this ancient post](https://www.autohotkey.com/board/topic/80580-how-to-programmatically-tile-cascade-windows/).
-It needed lots of tweaking to get it working, but it works well with multiple desktops without messing up the windows on other desktops.
+## Hotkeys at a glance
 
-While looking to see if there was anything else useful to implement, I came across a poorly implemented application switcher with no reverse.  I really missed this functionality from MacOS, Command+`, so I implemented it as best I could without events to know if the focus order had changed.
+| Hotkey | What it does | Script |
+| --- | --- | --- |
+| `Win + Ctrl + Left / Right` | Switch to the previous/next desktop instantly | `VD-move-window-with-desktop.ahk` |
+| `Win + Ctrl + Shift + Left / Right` | Move the active window to the previous/next desktop and follow it | `VD-move-window-with-desktop.ahk` |
+| `Win + Alt + C` | Cascade all windows on the current desktop | `VD-cascade.ahk` |
+| `Win + Alt + H` | Tile all windows on the current desktop horizontally | `VD-cascade.ahk` |
+| `Win + Alt + V` | Tile all windows on the current desktop vertically | `VD-cascade.ahk` |
+| `Win + Alt + Shift + C / H / V` | Same as above, but only windows of the active app (eg all Chrome windows) | `VD-cascade.ahk` |
+| `Win + Alt + Shift + Numpad+` | Bring all windows of the active app to the front | `VD-cascade.ahk` |
+| `Win + Alt + Shift + Numpad-` | Send all windows of the active app to the back | `VD-cascade.ahk` |
+| ``Alt + ` `` | Switch to the most recent other window of the same app | `AppSpecificTabSwitcher.ahk` |
+| ``Alt + Shift + ` `` | Switch to the oldest other window of the same app | `AppSpecificTabSwitcher.ahk` |
 
-## Overview 
+Run only the scripts you want, they're independent of each other.
 
-[AutoHotKey](https://www.autohotkey.com/) is free, and is now at Version 2. 
+## Setup
 
-Once AutoHotKey is installed, scripts can be placed anywhere on your system, and end in `.ahk` or `.ah2` for v2 scripts.  
-Double click to execute them, and they will remain running until terminated via the AHK dash or system restart. 
+You'll need [AutoHotKey v2](https://www.autohotkey.com/) (free), plus FuPeiJiang's [VD.ahk](https://github.com/FuPeiJiang/VD.ahk) library for the virtual desktop stuff.
 
-The scripts in this library utilize FuPeiJiang's Virtual Desktop library **VD.ahk**, which is an AutoHotkey library what adds several script functions for managing virtual desktops.  You will need those scripts as well as the ones in this repo. 
+These instructions assume you have [Git for Windows](https://git-scm.com/downloads/win) installed. If not, you can use Github's ZIP download for both repos and set up the folders the same way.
 
-Both script folders must be adjacent to each other, for example;
+1. Download and install [AutoHotKey v2](https://www.autohotkey.com/). Make sure it's **v2**, not v1.
 
-```
-C:\
-└── Scripts
-    └── Ahk
-        ├── VD.ahk
-        └── Win11AutoHotKeyFixes
-```
+2. Make a folder for your scripts, we'll use `C:\Scripts\Ahk` here. Open it in Explorer, right click in the file pane and choose **Open in Terminal**.
 
-Here both `VD.ahk` ( FuPeiJiang's library ) and `Win11AutoHotKeyFixes` ( this library ) are *folders* containing their respective scripts. 
+3. Clone the **v2_port branch** of VD.ahk (the default branch is the old AHK v1 version and won't work):
 
-To enable the hotkeys you want, you'll enter the `Win11AutoHotKeyFixes` folder and run the AHK scripts you want;
+    ```
+    git clone --branch v2_port https://github.com/FuPeiJiang/VD.ahk.git
+    ```
 
-- `VD-move-window-with-desktop.ahk`
-- `VD-cascade.ahk`
-- `AppSpecificTabSwitcher.ahk`
+4. Clone this repo:
 
-These can be simply double-clicked to execute.
+    ```
+    git clone https://github.com/phazei/Win11AutoHotKeyFixes.git
+    ```
 
-*Details on what hotkeys each of these enable, and how to automatically start them with Windows, are below.*
+5. Your folder should now look like this. **Both folders need to sit side by side**, and `VD.ahk` must keep that exact name, because the scripts look for it at `..\VD.ahk\`:
 
-## Setup Process
+    ```
+    C:\
+    └── Scripts
+        └── Ahk
+            ├── VD.ahk
+            └── Win11AutoHotKeyFixes
+    ```
 
-These instructions assume you have [GIT for Windows](https://git-scm.com/downloads/win) installed.  If not, you can use Github's ZIP download feature and manually setup the directories accordingly. 
+6. Go into `Win11AutoHotKeyFixes` and double-click whichever scripts you want. They'll keep running until you close them from the AHK tray icon / dash, or restart.
 
-1.  Download and install  [AutoHotKey v2.0](https://www.autohotkey.com/)
+## Start them automatically with Windows
 
-2. Setup a directory for scripts e.g. we'll use `c:\Scripts\Ahk` here. 
+1. Right click each script you want and choose **Show more options → Create shortcut**.
+2. Press `Win + R`, type `shell:startup` and hit Enter to open your startup folder.
+3. Move the shortcuts in there.
 
-    a. Create the folder
+Or, from a PowerShell window in the `Win11AutoHotKeyFixes` folder, this does all three at once:
 
-    b. Open the folder in a terminal window.
-    To do this you can navigate to the folder in Explorer, then right click in the file pane and choose **Open in Terminal** which will launch PowerShell in that folder. 
-
-2.  Clone FuPeiJiang's Virtual Desktop library [VD.ahk](https://github.com/FuPeiJiang/VD.ahk) from Github. 
-You need the [v2_port branch](https://github.com/FuPeiJiang/VD.ahk/tree/v2_port) specifically. 
-
-```
-git clone --branch v2_port https://github.com/FuPeiJiang/VD.ahk.git
-```
-
-3. Clone this repository. 
-
-```
-git clone https://github.com/phazei/Win11AutoHotKeyFixes.git
-```
-
-4. Verify your setup.  Your Scripts folder should now contain two subfolders named `VD.ahk` and `Win11AutoHotKeyFixes`, like this; 
-
-```
-C:\
-└── Scripts
-    └── Ahk
-        ├── VD.ahk
-        └── Win11AutoHotKeyFixes
+```powershell
+$startup = [Environment]::GetFolderPath('Startup'); $sh = New-Object -ComObject WScript.Shell
+foreach ($s in 'VD-move-window-with-desktop','VD-cascade','AppSpecificTabSwitcher') {
+    $l = $sh.CreateShortcut("$startup\$s.lnk"); $l.TargetPath = "$PWD\$s.ahk"; $l.WorkingDirectory = "$PWD"; $l.Save()
+}
 ```
 
-## Running the Script
+## Troubleshooting
 
-Navigate to the `Win11AutoHotKeyFixes` and double-click the scripts you want to execute. 
+If you get errors when running a script, it's almost always one of these:
 
-- `VD-move-window-with-desktop.ahk`
-- `VD-cascade.ahk`
-- `AppSpecificTabSwitcher.ahk`
+- You installed AHK v1 instead of v2
+- The `VD.ahk` and `Win11AutoHotKeyFixes` folders aren't side by side, or `VD.ahk` got renamed
+- You cloned the `main` branch of **VD.ahk** instead of `v2_port`
 
-### Troubleshooting 
+If a hotkey just doesn't do anything, check that the script is actually running (look for the green **H** icon in the tray). After a Windows update it's worth pulling the latest VD.ahk too, since it relies on undocumented Windows internals that occasionally change.
 
-If you get any errors when you run the script, the most likely causes are;
+## Details
 
-- You have downloaded AHK v1 accidentally instead of v2 
-- Your two folders are not adjacent in the same dir, or you've renamed `VD.ahk` to something else 
-- You've accidentally cloned the `main` branch of **VD.ahk** rather than the `v2_port` branch 
+### Moving windows & switching desktops
 
-### Automatically Installing these at Windows Startup 
+*`VD-move-window-with-desktop.ahk`*
 
-1. For each script you want to autostart with Windows, create a shortcut. 
+I started with wanting to move the active window to the next desktop. This [superuser question had a few really good answers](https://superuser.com/questions/1685845/moving-current-window-to-another-desktop-in-windows-11-using-shortcut-keys) that built on each other, and the last user was nice enough to give [an AHK how-to](https://superuser.com/a/1728476).
 
-2. Press `Win+R` and type `shell:startup` to see your Windows startup folder. 
+It turned out switching this way skips the Windows slide animation, which is way faster, so the script now takes over the regular `Win + Ctrl + Left / Right` too. Both versions wrap around, so going right from your last desktop takes you back to the first. Since there's no "wall" anymore, a little `2 / 3` indicator pops up in the top right corner for a second so you always know where you are. It scales with your screen size; if you want it bigger or smaller, change `screenFraction` in the script.
 
-3. Drag those shortcuts in. 
+Note: on startup this script makes sure you have at least 3 desktops (`VD.createUntil(3)`). Change or remove that line if you'd like a different number.
 
+### Cascading & tiling windows
 
+*`VD-cascade.ahk`*
 
+After the desktop stuff, making a CascadeWindows or TileWindows script seemed like it might not be too hard after [finding this ancient post](https://www.autohotkey.com/board/topic/80580-how-to-programmatically-tile-cascade-windows/). It needed lots of tweaking to get it working, but it works well with multiple desktops without messing up the windows on other desktops. Minimized windows are left alone, maximized ones get restored first, and everything is arranged on your primary monitor.
 
-## Usage
+That post used the built-in Windows CascadeWindows/TileWindows functions, but on Win11 those silently skip some windows for no visible reason (and size them wrong with display scaling), so the arranging is done by the script itself now.
 
-Functionality is divided into 3 scripts- 
+If someone has a better suggestion for the cascading shortcuts, feel free to suggest it.
 
-### Moving windows
+### App Specific Switcher (Command+\`)
 
-*Run the `VD-move-window-with-desktop.ahk` script.*
+*`AppSpecificTabSwitcher.ahk`*
 
- - `Win + Ctrl + Shift + Left`:  Move active window to the left desktop and follow it
- - `Win + Ctrl + Shift + Right`: Move active window to the right and follow it
+While looking to see if there was anything else useful to implement, I came across a poorly implemented application switcher with no reverse. I really missed this from MacOS, so I implemented it as best I could without having events to know if the focus order changed. It comes pretty close, and works pretty well I think.
 
-### Cascading windows
+It keeps a consistent order while you tap through, so forward and back always make sense. If you click over to a different window of that app in between, it picks up the new order next time.
 
-*Run the `VD-cascade.ahk` script.*
+## Other
 
- - `Win + Alt + C`:  Cascade all windows on desktop
- - `Win + Alt + H`:  Tile all windows on desktop horizontally
- - `Win + Alt + V`:  Tile all windows on desktop vertically
- - Add `+ Shift` to any of the above: Will only Cascade/Tile matching executables (eg all chrome windows)
-
-### App Specific Switcher (Command+`)
-
-*Run the `AppSpecificTabSwitcher.ahk` script.*
-
- - ``Alt + ` ``:  Switch to most recent non-focused window of same app
- - ``Alt + Shift + ` ``:  Switch to oldest non-focused windows of same app
-
-## Other 
-
-If someone has a better suggestion for the cascading windows shortcuts, feel free to suggest it and any other ideas you might have.
-
+Ideas and PRs welcome, open an issue if you think of anything else Windows should have had in the first place.
