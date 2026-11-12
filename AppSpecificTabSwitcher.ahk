@@ -16,8 +16,6 @@ ProcessSetPriority "H"
 SetWinDelay -1
 SetControlDelay -1
 
-CoordMode "ToolTip", "Screen"
-
 DetectHiddenWindows False ; Prevents showing hidden windows from other desktops
 
 return
@@ -44,17 +42,18 @@ SwitchToSameProcess(reverse := false) {
     activeID := WinExist("A")
     if !activeID
         return
-    activeProcess := WinGetProcessName("ahk_id " activeID)
+    try {
+        activeProcess := WinGetProcessName("ahk_id " activeID)
+    } catch { ; eg an elevated window we aren't allowed to inspect
+        return
+    }
     activeArray := GetProcessWindowsArray("ahk_exe " activeProcess)
 
-    if activeArray.Length = 1 {
+    if !activeArray.Length || (activeArray.Length = 1 && activeArray[1] = activeID) {
         ; Only one window, nothing to switch to
         prevArray := []
         return
     }
-
-    OutputDebug(ArrayToSortedString(activeArray) "`n")
-
 
     ; Maintain consistent forward and backward movement in the window list
 	; Notes:
@@ -80,7 +79,8 @@ SwitchToSameProcess(reverse := false) {
 
     activeArray := prevArray ; since they match keep original cycling order
 
-    currentIndex := GetArrayIndex(activeArray, activeID)
+    ; The active window may not be in the list (eg a dialog), then forward goes to the most recent window
+    currentIndex := GetArrayIndex(activeArray, activeID) || 0
 
 
     if (!reverse) { ; forward goes to most recent window
@@ -105,30 +105,30 @@ GetProcessWindowsArray(search) { ; Return the list of windows as an array object
     for hwnd in WinGetList(search, , , "PopupHost") {
         if WinGetMinMax(hwnd) < 0
             continue
+        if !IsAltTabWindow(hwnd)
+            continue
 
         windowArray.Push(hwnd)
     }
     return windowArray
 }
 
-; Array utilities for this script
-ArrayMatchSequence(arr1, arr2) {
-    if !ArrayMatch(arr1, arr2)
+; Roughly the same rules Alt+Tab uses, so we skip the taskbar/desktop (both explorer.exe),
+; tool windows, dialogs owned by another window, and cloaked windows
+IsAltTabWindow(hwnd) {
+    exStyle := WinGetExStyle(hwnd)
+    if (exStyle & 0x80) && !(exStyle & 0x40000) ; WS_EX_TOOLWINDOW without WS_EX_APPWINDOW
         return false
-
-    shiftedIndex := GetArrayIndex(arr2, arr1[1]) - 1
-
-    for i, _ in arr1 {
-        index2 := i + shiftedIndex
-        if index2 > arr1.Length
-            index2 -= arr1.Length
-
-        if arr1[i] != arr2[index2]
-            return false
-    }
-    return true
+    if DllCall("GetWindow", "Ptr", hwnd, "UInt", 4, "Ptr") && !(exStyle & 0x40000) ; owned window
+        return false
+    cloaked := 0
+    DllCall("dwmapi\DwmGetWindowAttribute", "Ptr", hwnd, "UInt", 14, "UInt*", &cloaked, "UInt", 4)
+    if cloaked
+        return false
+    return !(WinGetClass(hwnd) ~= "^(Progman|WorkerW|Shell_TrayWnd|Shell_SecondaryTrayWnd)$")
 }
 
+; Array utilities for this script
 ArrayMatch(arr1, arr2) {
     return ArrayToSortedString(arr1) = ArrayToSortedString(arr2)
 }
@@ -150,25 +150,4 @@ GetArrayIndex(arr, item) {
             return i
     }
     return ""
-}
-
-; For debugging
-MakeListString(winArray) {
-    foundProcessesArr := []
-    for i, hwnd in winArray {
-        processName := WinGetProcessName(hwnd)
-        windowTitle := WinGetTitle(hwnd)
-        windowClass := WinGetClass(hwnd)
-
-        ; Example without the desktop number
-        foundProcessesArr.Push({num: i, id: hwnd, exe: processName, wClass: windowClass, wTitle: windowTitle})
-    }
-
-    finalStr := "('0' for `"Show on all desktops`", '1' for Desktop 1)`n`n"
-
-    for _, v in foundProcessesArr {
-        finalStr .= v.desktopNum_ " | #:" v.num " | id:" v.id " | e:" v.exe " | c:" v.wClass " | t:" v.wTitle "`n"
-    }
-
-    return finalStr
 }

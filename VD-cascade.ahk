@@ -21,9 +21,6 @@ SetControlDelay -1
 ; VD.init() ; COMMENT OUT `static dummyStatic1 := VD.init()` if you don't want to init at start of script
 #Include ./_WinArrange.ahk
 
-
-; You should WinHide invisible programs that have a window.
-; WinHide, "Malwarebytes Tray Application"
 ;#SETUP END
 
 ; VD.createUntil(3) ; Create until we have at least 3 virtual desktops
@@ -33,8 +30,7 @@ CASCADE      := 2                    ; for WinArrange Param 1
 VERTICAL     := 0                    ; for WinArrange Param 3
 HORIZONTAL   := 1                    ; for WinArrange Param 3
 ZORDER       := 4                    ; for WinArrange Param 3
-CLIENTAREA   := [50,50,1200,1000]    ; for WinArrange Param 4
-CA_MARGIN     := 50                   ; margin around cascade
+CA_MARGIN    := 50                   ; margin around cascade
 
 return
 
@@ -55,10 +51,6 @@ return
 !#C:: { ; CascadeWindows
 	WinArrangeDesktop(CASCADE, ZORDER)
 }
-
-;!#T:: ; CascadeWindows testing EVERYTHING
-; DllCall("CascadeWindows", "UInt", 0, "Int", 4, "Int", 0, "Int", 0, "Int", 0)
-;return
 
 ; Only do it for the same processes
 +!#V:: { ; TileWindowsVertically
@@ -86,21 +78,17 @@ WinArrangeDesktop(arrangeType, arrangeOption, byProcess := false) {
 }
 
 BringWindowsToFront(windows) {
-	OutputDebug("reverse" windows[-1] "   ")
-	OutputDebug("forward" windows[1] "`n")
 	for i, hwnd in windows {
 		; by going in reverse the order doesn't change each time
 		WinMoveTop("ahk_id " windows[-i])
     }
 }
 
-; This seems to also return minimized windows, but fortunately, the Dll call ignores minimized windows
+; Visible (non-minimized) windows on the current desktop, in z-order (topmost first)
 GetCurrentDesktopWindows(byProcess := false) {
     bak_DetectHiddenWindows := A_DetectHiddenWindows
-    DetectHiddenWindows false
 
     windows := []
-    stringWindows := ""
 
     try {
         activeProcess := WinGetProcessName("A")
@@ -129,7 +117,6 @@ GetCurrentDesktopWindows(byProcess := false) {
         if minimized < 0
             continue
 
-		;windows.Push({id:hwnd, title:windowTitle, processName:windowProcess})
 		windows.Push(hwnd)
     }
 
@@ -143,20 +130,17 @@ GetClientArea() {
     return [(left + CA_MARGIN), (top + CA_MARGIN), (right - CA_MARGIN), (bottom - CA_MARGIN)]
 }
 
-+!#NumpadAdd:: { ; bring window of specific process to front
+; Bring all windows of the active app to the front (arrows for keyboards without a numpad)
++!#Up::
++!#NumpadAdd:: {
     windows := GetCurrentDesktopWindows(true)
     BringWindowsToFront(windows)
 }
-+!#NumpadSub:: { ; move all windows of specific process to back
+
+; Send all windows of the active app to the back
++!#Down::
++!#NumpadSub:: {
     windows := GetCurrentDesktopWindows(true)
     for hwnd in windows
         WinMoveBottom("ahk_id " hwnd)
 }
-
-/*
-ExitRoutine:
-Loop, Parse, ARRAY, |
-  WinClose, ahk_id %A_LoopField%
-ExitApp
-Return
-*/

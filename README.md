@@ -19,8 +19,8 @@ Windows 11 window management is missing some pretty basic stuff, so these script
 | `Win + Alt + H` | Tile all windows on the current desktop horizontally | `VD-cascade.ahk` |
 | `Win + Alt + V` | Tile all windows on the current desktop vertically | `VD-cascade.ahk` |
 | `Win + Alt + Shift + C / H / V` | Same as above, but only windows of the active app (eg all Chrome windows) | `VD-cascade.ahk` |
-| `Win + Alt + Shift + Numpad+` | Bring all windows of the active app to the front | `VD-cascade.ahk` |
-| `Win + Alt + Shift + Numpad-` | Send all windows of the active app to the back | `VD-cascade.ahk` |
+| `Win + Alt + Shift + Up` or `Numpad+` | Bring all windows of the active app to the front | `VD-cascade.ahk` |
+| `Win + Alt + Shift + Down` or `Numpad-` | Send all windows of the active app to the back | `VD-cascade.ahk` |
 | ``Alt + ` `` | Switch to the most recent other window of the same app | `AppSpecificTabSwitcher.ahk` |
 | ``Alt + Shift + ` `` | Switch to the oldest other window of the same app | `AppSpecificTabSwitcher.ahk` |
 

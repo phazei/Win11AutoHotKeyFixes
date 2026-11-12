@@ -16,12 +16,6 @@ SetControlDelay -1
 ; Include the library
 #Include ../VD.ahk/VD.ah2
 ; VD.init() ; COMMENT OUT `static dummyStatic1 := VD.init()` if you don't want to init at start of script
-
-; You should WinHide invisible programs that have a window.
-try {
-    WinHide "Malwarebytes Tray Application"
-} catch {
-}
 ;#SETUP END
 
 VD.createUntil(3) ; Create until we have at least 3 virtual desktops
