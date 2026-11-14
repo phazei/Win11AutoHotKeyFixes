@@ -96,7 +96,11 @@ _MoveWindowVisible(hwnd, x, y, w, h) {
             borderB := (wy + wh) - NumGet(frame, 12, "Int")
             x -= borderL, y -= borderT, w += borderL + borderR, h += borderT + borderB
         }
-        WinMove(x, y, w, h, hwnd)
+        ; Fixed-size windows (no WS_THICKFRAME) only get moved, otherwise they get stuck at a size they can't be resized from
+        if WinGetStyle(hwnd) & 0x40000
+            WinMove(x, y, w, h, hwnd)
+        else
+            WinMove(x, y, , , hwnd)
         return 1
     }
     return 0
